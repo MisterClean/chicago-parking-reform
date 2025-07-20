@@ -1,0 +1,498 @@
+---
+title: "Chicago Parking Requirement Elimination: Transit-Served Locations Map"
+author: "GIS Analysis of Ordinance O2025-0015577"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_folding: hide
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  warning = FALSE, 
+  message = FALSE,
+  fig.width = 10,
+  fig.height = 8
+)
+```
+
+## Executive Summary
+
+On July 16, 2025, Chicago City Council passed a landmark ordinance (O2025-0015577) that dramatically expands areas where residential developments can proceed without parking mandates. This map visualizes the new landscape of parking-free development zones across the city.
+
+**Key Changes:**
+- Properties within CTA-served areas (outside downtown) can now build without parking
+- Two exceptions remain: Metra-only areas and downtown zoning districts still require Administrative Adjustments
+
+<div class="alert alert-info">
+**Important Note:** The Metra station buffers shown in this analysis are calculated from GTFS station centerpoints, not from actual station entrances/exits. In practice, the 2,640-foot radius should be measured from platform access points, which may result in slightly different coverage areas than shown here.
+</div>
+
+---
+
+## Setup and Dependencies
+
+```{r packages}
+# Load required packages
+packages <- c("tidyverse", "sf", "leaflet", "leaflet.extras", 
+              "httr", "jsonlite", "data.table", "units", "glue")
+
+# Install missing packages
+new_packages <- packages[!packages %in% installed.packages()[,"Package"]]
+if (length(new_packages) > 0) {
+  install.packages(new_packages)
+}
+
+# Load libraries
+invisible(lapply(packages, library, character.only = TRUE))
+
+# Set consistent CRS codes
+WGS84 <- 4326  # Web mapping standard
+IL_STATE_PLANE <- 3435  # Illinois State Plane (feet) for accurate buffers
+sf_use_s2(FALSE)
+```
+
+---
+
+## Data Collection Functions
+
+First, let's define helper functions to handle Chicago's data portal and GTFS feeds:
+
+```{r helper_functions}
+#' Fetch complete dataset from Chicago's Socrata portal
+#' @param dataset_id Socrata dataset identifier
+#' @param chunk_size Maximum rows per API call (default: 50000)
+#' @return sf object with all features
+fetch_socrata_geojson <- function(dataset_id, chunk_size = 50000) {
+  base_url <- glue("https://data.cityofchicago.org/resource/{dataset_id}.geojson")
+  offset <- 0
+  all_features <- list()
+  
+  # Loop through dataset in chunks
+  repeat {
+    query_url <- glue("{base_url}?$limit={chunk_size}&$offset={offset}")
+    
+    # Attempt to read chunk
+    chunk <- tryCatch(
+      st_read(query_url, quiet = TRUE),
+      error = function(e) NULL
+    )
+    
+    # Check if we've reached the end
+    if (is.null(chunk) || nrow(chunk) == 0) break
+    
+    all_features[[length(all_features) + 1]] <- chunk
+    
+    # If chunk is smaller than limit, we've got everything
+    if (nrow(chunk) < chunk_size) break
+    
+    offset <- offset + chunk_size
+  }
+  
+  # Combine all chunks
+  combined <- do.call(rbind, all_features)
+  return(st_make_valid(combined))
+}
+
+#' Download and cache files locally
+#' @param url Download URL
+#' @param filename Local filename
+#' @return Path to local file
+download_and_cache <- function(url, filename) {
+  if (!file.exists(filename)) {
+    download.file(url, filename, mode = "wb", quiet = TRUE)
+  }
+  return(filename)
+}
+
+#' Extract GTFS zip file
+#' @param zip_path Path to GTFS zip
+#' @param extract_dir Directory name for extraction
+#' @return Path to extracted directory
+extract_gtfs <- function(zip_path, extract_dir) {
+  if (!dir.exists(extract_dir)) {
+    unzip(zip_path, exdir = extract_dir)
+  }
+  return(extract_dir)
+}
+
+#' Query ArcGIS REST service
+#' @param layer_id Layer ID from Chicago's zoning service
+#' @return sf object with features
+query_arcgis <- function(layer_id) {
+  base <- "https://gisapps.chicago.gov/arcgis/rest/services/ExternalApps/Zoning/MapServer"
+  query_url <- glue("{base}/{layer_id}/query?where=1%3D1&outFields=*&outSR=4326&f=geojson")
+  return(st_read(query_url, quiet = TRUE))
+}
+```
+
+---
+
+## Step 1: Load Zoning Districts
+
+We begin by loading Chicago's zoning polygons and identifying downtown "D" districts, which remain subject to parking requirements:
+
+```{r load_zoning}
+# Fetch all zoning polygons (~30,000 features)
+cat("Loading Chicago zoning districts...\n")
+zoning_sf <- fetch_socrata_geojson("dj47-wfun")
+
+# Extract downtown districts (those starting with "D")
+downtown_districts <- zoning_sf %>%
+  filter(str_starts(zone_class, "D")) %>%
+  st_make_valid()
+
+cat(glue("Found {nrow(downtown_districts)} downtown zoning polygons\n"))
+```
+
+---
+
+## Step 2: Process Transit Station Data
+
+Next, we'll download and process CTA and Metra GTFS data to identify rail stations:
+
+```{r gtfs_processing}
+# Download GTFS feeds
+cat("Downloading transit schedules...\n")
+cta_zip <- download_and_cache(
+  "https://www.transitchicago.com/downloads/sch_data/google_transit.zip", 
+  "cta_gtfs.zip"
+)
+metra_zip <- download_and_cache(
+  "https://schedules.metrarail.com/gtfs/schedule.zip", 
+  "metra_gtfs.zip"
+)
+
+# Extract files
+cta_dir <- extract_gtfs(cta_zip, "cta")
+metra_dir <- extract_gtfs(metra_zip, "metra")
+
+# Load stop data
+cta_stops <- fread(file.path(cta_dir, "stops.txt"))
+metra_stops <- fread(file.path(metra_dir, "stops.txt"))
+```
+
+```{r identify_rail_stops}
+# Identify CTA rail stations (parent stations or location_type = 1)
+cta_rail_stops <- cta_stops %>%
+  filter(
+    (!is.na(parent_station) & parent_station != "") |
+    (!is.na(location_type) & location_type == 1)
+  )
+
+# Fallback method if no parent stations found
+if (nrow(cta_rail_stops) == 0) {
+  cat("Using route-based method to identify CTA rail stops...\n")
+  
+  cta_routes <- fread(file.path(cta_dir, "routes.txt"))
+  rail_routes <- cta_routes %>% filter(route_type == 1)  # 1 = subway/metro
+  
+  cta_trips <- fread(file.path(cta_dir, "trips.txt"))
+  rail_trips <- cta_trips %>% filter(route_id %in% rail_routes$route_id)
+  
+  cta_stop_times <- fread(file.path(cta_dir, "stop_times.txt"))
+  rail_stop_ids <- unique(
+    cta_stop_times %>% 
+    filter(trip_id %in% rail_trips$trip_id) %>% 
+    pull(stop_id)
+  )
+  
+  cta_rail_stops <- cta_stops %>% 
+    filter(stop_id %in% rail_stop_ids)
+}
+
+# Filter Metra stops to Illinois only
+metra_il_stops <- metra_stops %>% 
+  filter(stop_lat <= 42.5)  # Northern Illinois boundary
+
+# Convert to spatial features
+cta_rail_sf <- st_as_sf(
+  cta_rail_stops, 
+  coords = c("stop_lon", "stop_lat"), 
+  crs = WGS84
+) %>%
+  mutate(agency = "CTA")
+
+metra_sf <- st_as_sf(
+  metra_il_stops, 
+  coords = c("stop_lon", "stop_lat"), 
+  crs = WGS84
+) %>%
+  mutate(agency = "Metra")
+
+cat(glue("Processed {nrow(cta_rail_sf)} CTA rail stations and {nrow(metra_sf)} Metra stations\n"))
+```
+
+---
+
+## Step 3: Load Official Transit-Served Location Boundaries
+
+Chicago provides pre-calculated TSL boundaries through their zoning map service:
+
+```{r tsl_boundaries}
+cat("Fetching official TSL boundaries...\n")
+
+# Layer 13: Station-based TSL (2,640 ft buffers)
+tsl_station_boundaries <- query_arcgis(13) %>% st_make_valid()
+
+# Layer 14: Route-based TSL (1,320 ft buffers)
+tsl_route_boundaries <- query_arcgis(14) %>% st_make_valid()
+
+# Combine into single CTA-served area
+cta_served_area <- st_union(
+  st_union(tsl_station_boundaries), 
+  st_union(tsl_route_boundaries)
+)
+
+cat("TSL boundaries loaded successfully\n")
+```
+
+---
+
+## Step 4: Calculate Metra Buffers and Identify Zones
+
+Now we'll create the Metra station buffers and determine which areas require Administrative Adjustments:
+
+```{r calculate_zones}
+# Transform to Illinois State Plane for accurate distance calculations
+metra_buffer <- st_transform(metra_sf, IL_STATE_PLANE) %>%
+  st_buffer(2640) %>%  # 2,640 feet = 0.5 miles
+  st_union()
+
+cta_served_il <- st_transform(cta_served_area, IL_STATE_PLANE)
+
+# Calculate Metra-only areas (require Admin Adjustment)
+metra_only_area <- st_difference(metra_buffer, cta_served_il)
+
+cat("Zone calculations complete\n")
+```
+
+---
+
+## Step 5: Apply Downtown Carve-out
+
+Remove downtown districts from the no-parking zone:
+
+```{r apply_carveouts}
+# Project and union downtown districts
+downtown_union <- st_transform(downtown_districts, IL_STATE_PLANE) %>% 
+  st_union()
+
+# CTA areas excluding downtown = no parking requirements
+cta_no_parking_zone <- st_difference(cta_served_il, downtown_union)
+
+# All transit-served areas (for statistics)
+all_transit_served <- st_union(cta_no_parking_zone, metra_buffer)
+```
+
+---
+
+## Step 6: Clip to City Boundaries
+
+Ensure all zones are within Chicago city limits:
+
+```{r clip_boundaries}
+# Load city boundary
+city_boundary <- st_read(
+  "https://data.cityofchicago.org/resource/qqq8-j68g.geojson", 
+  quiet = TRUE
+) %>%
+  st_make_valid() %>%
+  st_transform(IL_STATE_PLANE)
+
+# Clip all layers to city boundary
+cta_no_parking_zone <- st_intersection(cta_no_parking_zone, city_boundary)
+metra_only_area <- st_intersection(metra_only_area, city_boundary)
+all_transit_served <- st_intersection(all_transit_served, city_boundary)
+
+# Transform back to WGS84 for web mapping
+downtown_wgs <- st_transform(downtown_union, WGS84)
+cta_no_parking_wgs <- st_transform(cta_no_parking_zone, WGS84)
+metra_only_wgs <- st_transform(metra_only_area, WGS84)
+all_transit_wgs <- st_transform(all_transit_served, WGS84)
+```
+
+---
+
+## Step 7: Calculate Coverage Statistics
+
+Let's quantify the impact of this ordinance:
+
+```{r calculate_stats}
+# Helper function to calculate area in square miles
+calc_area_sqmi <- function(geometry) {
+  area <- st_area(geometry)
+  set_units(area, "mi^2") %>% 
+    as.numeric() %>% 
+    round(1)
+}
+
+# Chicago's total area
+CHICAGO_AREA_SQMI <- 234
+
+# Calculate areas
+total_transit_area <- calc_area_sqmi(all_transit_served)
+cta_no_parking_area <- calc_area_sqmi(cta_no_parking_zone)
+metra_only_area_sqmi <- calc_area_sqmi(metra_only_area)
+
+# Calculate percentages
+pct_total <- round(total_transit_area / CHICAGO_AREA_SQMI * 100, 1)
+pct_cta_no_parking <- round(cta_no_parking_area / CHICAGO_AREA_SQMI * 100, 1)
+pct_metra_only <- round(metra_only_area_sqmi / CHICAGO_AREA_SQMI * 100, 1)
+
+# Create summary table
+coverage_summary <- tibble(
+  Zone = c("Total Transit-Served", 
+           "No Parking Requirements (CTA)", 
+           "Admin Adjustment Required (Metra-only)"),
+  `Area (sq mi)` = c(total_transit_area, cta_no_parking_area, metra_only_area_sqmi),
+  `% of City` = c(pct_total, pct_cta_no_parking, pct_metra_only)
+)
+
+knitr::kable(coverage_summary, caption = "Parking Requirement Zone Coverage")
+```
+
+---
+
+## Step 8: Interactive Map
+
+```{r create_map}
+# Create interactive map
+parking_map <- leaflet() %>%
+  # Base map
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  
+  # Zone polygons
+  addPolygons(
+    data = cta_no_parking_wgs,
+    fillColor = "#6B46C1", 
+    fillOpacity = 0.35, 
+    color = "#6B46C1", 
+    weight = 1,
+    group = "No Parking Requirements",
+    popup = "No parking requirements - build freely!"
+  ) %>%
+  
+  addPolygons(
+    data = metra_only_wgs, 
+    fillColor = "#F97316", 
+    fillOpacity = 0.45, 
+    color = "#EA580C", 
+    weight = 2,
+    group = "Admin Adjustment Required (Metra-only)",
+    popup = "Administrative Adjustment required for parking reduction"
+  ) %>%
+  
+  addPolygons(
+    data = downtown_wgs, 
+    fillColor = "#000000", 
+    fillOpacity = 0.15, 
+    color = "#000000", 
+    weight = 0.7,
+    group = "Downtown Carve-out (D-districts)",
+    popup = "Downtown district - parking requirements remain"
+  ) %>%
+  
+  # Transit stations
+  addCircleMarkers(
+    data = cta_rail_sf, 
+    radius = 3, 
+    color = "#0078D4", 
+    fillOpacity = 0.9, 
+    group = "CTA Rail Stations",
+    popup = ~paste0("<b>", stop_name, "</b><br>CTA Rail")
+  ) %>%
+  
+  addCircleMarkers(
+    data = metra_sf, 
+    radius = 3, 
+    color = "#E31837", 
+    fillOpacity = 0.9, 
+    group = "Metra Stations",
+    popup = ~paste0("<b>", stop_name, "</b><br>Metra")
+  ) %>%
+  
+  # Layer controls
+  addLayersControl(
+    overlayGroups = c("No Parking Requirements", 
+                      "Admin Adjustment Required (Metra-only)",
+                      "Downtown Carve-out (D-districts)", 
+                      "CTA Rail Stations", 
+                      "Metra Stations"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  # Legend
+  addLegend(
+    position = "bottomright",
+    colors = c("#6B46C1", "#F97316", "#000000"),
+    labels = c("No Parking Requirements", 
+               "Admin Adjustment Required", 
+               "Downtown Carve-out"),
+    title = "Parking Elimination Zones",
+    opacity = 0.7
+  ) %>%
+  
+  # Hide all groups except the main one
+  hideGroup("Admin Adjustment Required (Metra-only)") %>%
+  hideGroup("Downtown Carve-out (D-districts)") %>%
+  hideGroup("CTA Rail Stations") %>%
+  hideGroup("Metra Stations") %>%
+  
+  # Set initial view
+  setView(lng = -87.6298, lat = 41.8781, zoom = 11)
+
+# Display map
+parking_map
+```
+
+---
+
+## Key Findings
+
+The new ordinance represents a major shift in Chicago's approach to parking requirements:
+
+- **`r total_transit_area` square miles** (`r pct_total`% of the city) are now considered transit-served
+- **`r cta_no_parking_area` square miles** (`r pct_cta_no_parking`% of the city) can build residential developments without any parking
+- **`r metra_only_area_sqmi` square miles** (`r pct_metra_only`% of the city) require an Administrative Adjustment to reduce parking
+
+This means that approximately **`r pct_cta_no_parking`% of Chicago** is now free from residential parking mandates, enabling more affordable and sustainable development near transit.
+
+---
+
+## Data Sources
+
+- **Transit-Served Location (TSL) Boundaries**:
+  - [Chicago Zoning Map Service](https://gisapps.chicago.gov/arcgis/rest/services/ExternalApps/Zoning/MapServer)
+  - Layer 13: [TSL Station boundaries](https://gisapps.chicago.gov/arcgis/rest/services/ExternalApps/Zoning/MapServer/13/) (pre-buffered 2,640 ft zones)
+  - Layer 14: [TSL Route boundaries](https://gisapps.chicago.gov/arcgis/rest/services/ExternalApps/Zoning/MapServer/14) (pre-buffered 1,320 ft zones)
+
+- **GTFS Transit Data**:
+  - [CTA GTFS Feed](https://www.transitchicago.com/developers/gtfs/)
+  - [Metra GTFS Feed](https://metra.com/developers)
+
+- **Geographic Boundaries**:
+  - [Zoning Districts](https://data.cityofchicago.org/Community-Economic-Development/Boundaries-Zoning-Districts-current-/dj47-wfun)
+  - [City Boundary](https://data.cityofchicago.org/Facilities-Geographic-Boundaries/City_Boundary/qqq8-j68g)
+
+- **Ordinance**: O2025-0015577 (Sponsored by Ald. La Spata, 1st Ward)
+
+---
+
+## Additional Resources
+
+- [Chicago Cityscape article](https://www.chicagocityscape.com/blog/parking-mandates-2025.php) on the ordinance
+- [Chicago Municipal Code - Transit Supportive Bus Line Corridors](https://codelibrary.amlegal.com/codes/chicago/latest/chicago_il/0-0-0-2699368)
+- [Department of Planning and Development](https://www.chicago.gov/dpd) for official guidance
+- [Connected Communities Ordinance](https://www.chicago.gov/city/en/depts/dcd/supp_info/connected-communities-ordinance.html) background
+
+---
+
+<div class="alert alert-success">
+**Questions or feedback?** This analysis is open source. Contributions and corrections are welcome via pull request.
+</div>

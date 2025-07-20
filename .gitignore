@@ -1,0 +1,68 @@
+# R Session Data
+.Rhistory
+.RData
+.Ruserdata
+
+# R Temporary Files
+temp.R
+temp_*.R
+*_temp.R
+
+# Generated R Markdown Outputs
+*.html
+*.pdf
+*.docx
+*.tex
+
+# R Package Development
+*.tar.gz
+*.Rcheck/
+.Rbuildignore
+
+# Large Data Files - GTFS Downloads
+*.zip
+cta_gtfs.zip
+metra_gtfs.zip
+
+# Extracted GTFS Data Directories
+cta/
+metra/
+
+# Cache Directories
+data_cache/
+gtfs_cache/
+cache/
+
+# R Environment Variables
+.Renviron
+
+# RStudio Files
+.Rproj.user/
+*.Rproj.user
+
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor Files
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Log Files
+*.log
+
+# Temporary Directories
+tmp/
+temp/
+
+# R Package Installation
+packrat/lib*/
+renv/library/

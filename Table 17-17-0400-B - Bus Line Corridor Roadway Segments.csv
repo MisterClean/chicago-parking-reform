@@ -1,0 +1,227 @@
+Street Name,From,To,"Served by CTA or
+Pace Route(s)"
+100th St,Torrence Ave,Van Vlissingen Rd,"15, J14"
+103rd St,Michigan Ave,Torrence Ave,"15, J14, 106"
+104th St,Torrence Ave,Commercial Ave,71
+111th St,Vincennes Ave,Cottage Grove Ave,"111, 115"
+115th St,Vincennes Ave,King Dr,"111, 115"
+119th St,Western Ave,Michigan Ave,"111, 115, 119"
+127th St,Indiana Ave,Michigan Ave,34
+130th St,Eberhart Ave,Indiana Ave,34
+131st St,Ellis Ave,Eberhart Ave,34
+133rd St,Langley Ave,Ellis Ave,34
+16th St,Indiana Ave,Michigan Ave,12
+25th St,Michigan Ave,King Dr,21
+25th St,Lawndale Ave,Central Park Ave,82
+26th St,King Dr,Michigan Ave,21
+26th St,Ogden Ave,Blue Island Ave,60
+31st St,Komensky Ave,Pulaski Rd,53
+31st St,Central Park Ave,Lawndale Ave,82
+32nd St,Lawndale Ave,Central Park Ave,82
+35th St,Cottage Grove Ave,Michigan Ave,4
+41st Street,Prairie Ave,Michigan Ave,39
+43rd St,Cottage Grove Ave,Prairie Ave,43
+43rd St,LaSalle St,State St,43
+47th St,Kedzie Ave,S DuSable Lake Shore Dr,"6, 15, 43, 47"
+50th St,S Lake Shore Dr,Cornell Ave,172
+51st St,Wells St,Cottage Grove Ave,15
+53rd St,Woodlawn Ave,Ellis Ave,172
+55th St,Cicero,Morgan St,55
+55th St,Rainey Dr,S Hyde Park Blvd,55
+56th St,Stony Island Ave,S Lake Park Ave,15
+57th Dr,57th St,S Everett Ave,"6, 55"
+57th St,Stony Island Ave,57th Dr,6
+59th St,Dorchester Ave,Woodlawn Ave,172
+60th St,Stony Island Ave,Cottage Grove Ave,"2, 172"
+63rd St,Cicero Ave,Stony Island Ave,63
+64th St,Stony Island Ave,Blackstone Ave,63
+67th St,S South Shore Dr,Rhodes Ave,"6, 15, 26, 67"
+69th St,Western Ave,Keefe Ave,"67, 71"
+71st St,Western Ave,Kedzie Ave,67
+71st St,S South Shore Dr,Vincennes Ave,"6, 26, 71"
+73rd St,Exchange Ave,Yates Blvd,71
+74th St,Damen Ave,Loomis Blvd,75
+74th St,Racine Ave,Eggleston Ave,75
+75th St,S South Shore Dr,Eggleston Ave,"71, 75"
+76th St,Loomis Blvd,Racine Ave,75
+76th St,Kostner Ave,Cicero Ave,79
+79th St,Cicero Ave,S South Shore Dr,79
+83rd St,Exchange Ave,S South Shore Dr,"26, 71"
+87th St,Western Ave,Buffalo Ave,"87, 95"
+91st St,Mackinaw Ave,Commercial Ave,"26, 87, 95"
+92nd St,Commerical Ave,Buffalo Ave,95
+93rd St,Stony Island Ave,Exchange Ave,95
+93rd St,Cottage Grove Ave,Woodlawn Ave,95
+95th St,Woodlawn Ave,Stony Island Ave,95
+95th St,Western Ave,Cottage Grove Ave,"3, 4, 95, 106, 111, 115, 119"
+Adams St,Michigan Ave,Clinton St,"7, 151"
+Archer Ave,Harlem Ave,State St,62
+Armitage Ave,Pulaski Rd,Kostner Ave,73
+Ashland Ave,95th St,Irving Park Rd,"9, X9, 63"
+Ashland Ave,119th St,115th St,"111, 115"
+Ashland Blvd,Pratt Blvd,Morse Ave,155
+Balbo Dr,Columbus Dr,Michigan Ave,"6,26, J14"
+Belmont Ave,Cumberland Ave,N Lake Shore Dr W,77
+Blackstone Ave,64th St,63rd St,63
+Blue Island Ave,26th St,Cermak Rd,60
+Blue Island Ave,Loomis St,Racine Ave,60
+Bradley Pl,Broadway,Halsted St,8
+Broadway,Clark St,Devon Ave,"8, 36, 80, 90"
+Bryn Mawr Ave,Broadway,Lake Shore Dr,"92, 84"
+Bryn Mawr Ave,Central Ave,Elston Ave,85
+Buffalo Ave,87th St,92nd St,"87, 95"
+Burley Ave,92nd St,91st St,95
+Canal St,Harrison St,Washington St,"7, 60"
+Cannon Dr,Stockton Dr,Sheridan Rd,151
+Central ave,Milwaukee Ave,Elston Ave,85
+Central Ave,Harrison St,Higgins Ave,"12, 85"
+Central Park Ave,25th St,Douglas Blvd,82
+Central Park Ave,32nd St,31st St,82
+Cermak Rd,Cicero Ave,Michigan Ave,"3, 21, 60"
+Chicago Ave,Austin Blvd,Fairbanks Ct,"3, 26, 66"
+Cicero Ave,I-55,79th St,"54B, 55, 63, 79"
+Cicero Ave,Montrose Ave,Roosevelt Rd,"54, 60"
+Clarendon Ave,Lawrence Ave,Irving Park Ave,"135, 148"
+Clark St,Polk St,Howard St,"22, 36, 70"
+Clinton St,Madison St,Harrison St,"7, 60, 151"
+Columbus Dr,S DuSable Lake Shore Dr,Balbo Dr,"6, 26, J14, 146"
+Columbus Dr,Randolph St,South Water,4
+Commercial Ave,104th St,Exchange Ave,"26, 71, 87"
+Congress Plaza Dr,Michigan Ave,Ida B Wells Dr,7
+Cornell Ave,50th St,E Hyde Park Blvd,172
+Cottage Grove Ave,111th St,35th St,"4, 95, 115"
+Damen Ave,Taylor St,Roosevelt Rd,12
+Dearborn St,Polk St,Division St,"22, 36, 62, 70, 151"
+Devon Ave,Broadway,Kedzie Ave,"36, 155"
+Diversey Ave,Kedzie Ave,N Lake Shore Dr W,"76, 77"
+Diversey Ave,Natchez Ave,Milwaukee Ave,76
+Division St,Austin Blvd,State St,"36, 70"
+Dorchester Ave,60th St,59th St,172
+Douglas Blvd,Central Park Ave,Homan Ave,82
+E Hyde Park Blvd,S Lake Shore Dr,Cottage Grove Ave,"2, 6, 15, 28, 172"
+Eberhart Ave,131st St,130th St,34
+Ellis Ave,133rd St,131st St,34
+Ellis Ave,53rd St,60th St,172
+Elston Ave,Byrn Mawr Ave,Central Ave,85
+Ewing Ave,91st St,106th St,26
+Exchange Ave,Commercial Ave,83rd St,"26, 71"
+Exchange Ave,93rd St,92nd St,95
+Exchange Ave,75th St,73rd St,71
+Fairbanks Ct,Chicago Ave,Illinois St,66
+Fifth Ave,Kostner Ave,Harrison St,7
+Foster Ave,Lake Shore Dr,Milwaukee Ave,"92, 147"
+Fullerton Ave,Grand Ave,Halsted St,74
+Gale St,Higgins Ave,Milwaukee Ave,85
+Grand Ave,Streeter Dr,State St,"29, 66"
+Grand Ave,Nordica Ave,Fullerton Ave,74
+Halsted St,79th St,Waveland Ave,"8, 20, 74"
+Halsted St,127th St,95th St,"8A, 108"
+Harrison St,Paulina St,Canal St,"7, 60"
+Harrison St,Central Ave,Kostner Ave,7
+Harrison St,Fifth Ave,Wood St,7
+Harrison St,Wells St,Financial Pl,36
+Higgins Ave,Central Ave,Gale St,85
+Homan Ave,Douglas Blvd,North Ave,82
+Howard St,Paulina St,Clark St,22
+Ida B Wells Dr,Financial Pl,Dearborn St,36
+Ida B Wells Dr,Congress Plaza Dr,State St,"7, 147"
+Illinois St,Dearborn St,Streeter Dr,"29, 36, 66"
+Indiana Ave,41st St,Pershing Rd,39
+Indiana Ave,35th St,Michigan Ave,4
+Indiana Ave,Roosevelt Rd,16th St,12
+Indiana Ave,130th St,127th St,34
+Inner Lake Shore Dr,Belmont Ave,W Sheridan Rd,"135, 146"
+Irving Park Rd,Cumberland Ave,Lake Shore Dr (local),"9, 80, 135, 148"
+Jackson Blvd,Clinton St,Michigan Ave,"7, 151"
+Jeffery Blvd,Van Vlissingen Rd,67th St,"15, J14"
+Justine St,63rd St,Ashland/63rd CTA Station,63
+Kedzie Ave,48th Pl,47th St,47
+Kedzie Ave,Milwaukee Ave,Diversey Ave,76
+Keefe Ave,69th St,Rhodes Ave,67
+Kimball Ave,North Ave,Lincoln Ave,82
+King Dr,115th St,26th St,"3, 21, 111, 115"
+Kinzie St,Dearborn St,State St,62
+Kostner Ave,Harrison St,Fifth Ave,7
+Lafayette Ave,69th St,95th St,"29, 75"
+Lake St,State St,Michigan Ave,146
+LaSalle Dr,Lake Shore Dr,Stockton Dr,151
+LaSalle St,Pershing Road,35th Street,39
+LaSalle St,47th St,43rd St,43
+Lawndale Ave,32nd Ave,25th St,82
+Lawrence Ave,Milwaukee Ave,N Lake Shore Dr W,81
+Lincoln Ave,Bryn Mawr Ave,Leland Ave,11
+Lincoln Ave,Webster Ave,Fullerton Ave,"37, 74"
+Lipps Ave,Jefferson Park Blue Line Station,Lawrence Ave,81
+Loomis Blvd,74th St,76th St,75
+Loomis St,Cermak Rd,Blue Island Ave,60
+Madison St,Austin Blvd,Michigan Ave,"20, 60, J14"
+Marine Dr,Foster Ave,Irving Park Rd,"81, 136, 146, 148"
+Marquette Rd,67th St,Promontory Dr,67
+Marshfield Ave,117th St,119th St,"111, 115"
+McCormack Blvd,Lincoln Ave,Devon Ave,82
+McFetridge Dr,Museum Campus Dr,Columbus Dr,146
+Michigan Ave,127th St,95th St,"34, 39, 106, 119"
+Michigan Ave,35th St,Lake Shore Dr,"3, 4, 6, 7, 12, 20, 21, 26, 60, J14, 146, 147, 151"
+Milwaukee Ave,Division St,Foster Ave,"56, 68, 76, 85/85A, 81, 88, 91, 92"
+Milwaukee Ave,W Veterans Place,Albion Ave,Pulse Milwaukee
+Montrose Ave,Kimball Ave,California Ave,78
+Morgan St,Garfield Blvd,Rainey Dr,55
+Morse Ave,Ashland Blvd,Sheridan Rd,155
+N Lake Shore Dr W,Belmont Ave,Diversey Pkwy,77
+North Ave,Harlem Ave,Clark St,72
+Ogden Ave,Pulaski Rd,Western Ave,157
+Ogden Ave,Roosevelt Rd,Polk St,"12, 157"
+Museum Campus Dr,Solidarity Dr,McFetridge Dr,146
+Paulina St,Rogers Ave,Howard St,22
+Paulina St,Polk St,Harrison St,7
+Pershing Rd,Cottage Grove Ave,LaSalle St,39
+Polk St,Wood St,Paulina St,7
+Polk St,Clark St,State St,"22, 62"
+Prairie Ave,Pershing Road,41st Street,39
+Pratt Blvd,Sheridan Rd,Ashland Blvd,155
+Pulaski Rd,31st St,Peterson Ave,53
+Pulaski Rd,36th St,87th St.,53A
+Pulaski Rd,99th St,115th St,53A
+Racine Ave,Blue Island Ave,Harrison St,60
+Racine Ave,76th St,74th St,75
+Rainey Dr,Morgan St,55th St,55
+Randolph St,Michigan Ave,Harbor Dr,"4, 6, 60"
+Rhodes Ave,Keefe Ave,67th St,67
+Rogers Ave,Clark St,Paulina St,22
+Roosevelt Rd,Central Ave,Ogden Ave,12
+Roosevelt Rd,Damen Ave,Columbus Dr,"12, 146"
+S Hyde Park Blvd,57th Dr,E Hyde Park Blvd,"6, 28, 55"
+S Lake Park Ave,56th St,47th St,"2, 6, 15, 28"
+S Lake Shore Dr (local),E Hyde Park Blvd,50th St,172
+S South Shore Dr,83rd St,67th St,"6, 26, 71"
+Sheridan Rd,Foster Ave,Howard St,"92, 136, 147, 155"
+Sheridan Rd,Diversey Pkwy,Melrose St,"77, 134, 143, 151"
+Solidarity Dr,Planetarium,Museum Campus Dr,146
+South Water,Columbus Dr,Michigan Ave,4
+Southport Ave,Clark St,Irving Park Rd,9
+State St,95th St,Division St,"6, 29, 36, 62, 71, 75, 142, 147"
+Stetson Ave,Randolph St,Wacker Dr,6
+Stockton Dr,LaSalle Dr,Cannon Dr,151
+Stony Island Ave,56th St,95th St,"2, 6, 15, 26, 28, 63, 95"
+Streeter Dr,Illinois St,Grand Ave,66
+Taylor St,Ogden Ave,Damen Ave,12
+Trumbull Ave,Cermak Rd,Cermak Rd,21
+Torrence Ave,112th St,100th St,"71, J14"
+Van Vlissingen Rd,100th St,Jeffery Blvd,"15, J14"
+Vincennes Ave,69th Red Line Station,71st St,71
+Vincennes Ave,115th St,111th St,111
+W Sheridan Rd,Lake Shore Dr,N Sheridan Rd,"80, 151"
+Wacker Dr,State St,Columbus Dr,6
+Walton St,Dearborn St,Clark St,"22, 70"
+Washington St,Halsted St,Michigan Ave,"20, 60, J14, 147, 151"
+Waveland Ave,Halsted St,Broadway,8
+Webster Ave,Halsted St,Lincoln Ave,74
+Wells St,47th St,51st St,15
+Wentworth Ave,51st St,47th St,15
+Western Ave,79th St,Howard St,"49, X49, 49B"
+Western Ave,95th St,87th St,95
+Wood St,Harrison St,Polk St,7
+Woodlawn Ave,93rd St,95th St,95
+Woodlawn Ave,59th St,E Hyde Park Blvd,172
+Yates Ave,103rd St,100th St,15
+Yates Ave,73rd St,71st St,71
