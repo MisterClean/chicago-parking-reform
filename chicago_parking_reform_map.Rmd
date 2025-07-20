@@ -485,6 +485,9 @@ parking_map <- leaflet() %>%
   hideGroup("Downtown Carve-out (D-districts)") %>%
   hideGroup("CTA Rail Stations") %>%
   hideGroup("Metra Stations") %>%
+
+  # Add fullscreen control
+  addFullscreenControl() %>%
   
   # Set initial view
   setView(lng = -87.6298, lat = 41.8781, zoom = 11)
