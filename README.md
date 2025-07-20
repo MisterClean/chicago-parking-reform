@@ -4,6 +4,12 @@ An interactive GIS analysis and visualization of Chicago's landmark parking mand
 
 ![Chicago Parking Map Preview](preview.png)
 
+## 🌐 Interactive Map
+
+**[View the interactive map online](https://misterclean.github.io/chicago-parking-reform/)**
+
+Explore the interactive map showing Chicago's parking mandate elimination zones directly in your browser.
+
 ## 🚇 Overview
 
 On July 16, 2025, Chicago City Council passed ordinance O2025-0015577, dramatically expanding areas where residential developments can be built without parking mandates. This R-based analysis creates an interactive map showing:
