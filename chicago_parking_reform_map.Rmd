@@ -1,12 +1,11 @@
 ---
 title: "Dude, Where's My Parking Requirement? Chicago Says You Don't Need One"
-author: "Michael McLean, Member of Abundant Housing Illinois"
+author: "Michael McLean | [mclean.bsky.social](mclean.bsky.social)"
 date: "`r Sys.Date()`"
 output:
   html_document:
     theme: flatly
-    toc: true
-    toc_float: true
+    toc: false
     code_folding: hide
     self_contained: true
 ---
@@ -21,11 +20,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Executive Summary
-
 On July 16, 2025, Chicago City Council [passed](https://chi.streetsblog.org/2025/07/18/chicagos-vote-to-totally-eliminate-parking-mandates-near-train-stations-is-great-news-creating-transit-friendly-housing) a landmark ordinance (O2025-0015577) that dramatically expands areas where residential developments can proceed without parking mandates. This map visualizes the new landscape of parking-free development zones across the city.
 
 **Key Changes:**
+
 - Properties within CTA-served areas (outside downtown) can now build without parking
 - Two exceptions remain: Metra-only areas and downtown zoning districts still require Administrative Adjustments
 
