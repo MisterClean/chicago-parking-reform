@@ -8,12 +8,6 @@ temp.R
 temp_*.R
 *_temp.R
 
-# Generated R Markdown Outputs
-*.html
-*.pdf
-*.docx
-*.tex
-
 # R Package Development
 *.tar.gz
 *.Rcheck/
