@@ -1,0 +1,268 @@
+---
+title: "Chicago Parking Mandate Map"
+output: 
+  html_document:
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{r packages, include=FALSE}
+packages <- c("tidyverse", "sf", "leaflet", "leaflet.extras", 
+              "httr", "jsonlite", "data.table", "units", "glue")
+new_packages <- packages[!packages %in% installed.packages()[,"Package"]]
+if (length(new_packages) > 0) install.packages(new_packages)
+invisible(lapply(packages, library, character.only = TRUE))
+
+WGS84 <- 4326
+IL_STATE_PLANE <- 3435
+sf_use_s2(FALSE)
+```
+
+```{r helper_functions, include=FALSE}
+fetch_socrata_geojson <- function(dataset_id, chunk_size = 50000) {
+  base_url <- glue("https://data.cityofchicago.org/resource/{dataset_id}.geojson")
+  offset <- 0
+  all_features <- list()
+  
+  repeat {
+    query_url <- glue("{base_url}?$limit={chunk_size}&$offset={offset}")
+    chunk <- tryCatch(st_read(query_url, quiet = TRUE), error = function(e) NULL)
+    if (is.null(chunk) || nrow(chunk) == 0) break
+    all_features[[length(all_features) + 1]] <- chunk
+    if (nrow(chunk) < chunk_size) break
+    offset <- offset + chunk_size
+  }
+  
+  combined <- do.call(rbind, all_features)
+  return(st_make_valid(combined))
+}
+
+download_and_cache <- function(url, filename) {
+  if (!file.exists(filename)) {
+    download.file(url, filename, mode = "wb", quiet = TRUE)
+  }
+  return(filename)
+}
+
+extract_gtfs <- function(zip_path, extract_dir) {
+  if (!dir.exists(extract_dir)) {
+    unzip(zip_path, exdir = extract_dir)
+  }
+  return(extract_dir)
+}
+
+query_arcgis <- function(layer_id) {
+  base <- "https://gisapps.chicago.gov/arcgis/rest/services/ExternalApps/Zoning/MapServer"
+  query_url <- glue("{base}/{layer_id}/query?where=1%3D1&outFields=*&outSR=4326&f=geojson")
+  return(st_read(query_url, quiet = TRUE))
+}
+```
+
+```{r data_processing, include=FALSE}
+# Load zoning districts
+zoning_sf <- fetch_socrata_geojson("dj47-wfun")
+downtown_districts <- zoning_sf %>%
+  filter(str_starts(zone_class, "D")) %>%
+  st_make_valid()
+
+# Download and process GTFS data
+cta_zip <- download_and_cache(
+  "https://www.transitchicago.com/downloads/sch_data/google_transit.zip", 
+  "cta_gtfs.zip")
+metra_zip <- download_and_cache(
+  "https://schedules.metrarail.com/gtfs/schedule.zip", 
+  "metra_gtfs.zip")
+
+cta_dir <- extract_gtfs(cta_zip, "cta")
+metra_dir <- extract_gtfs(metra_zip, "metra")
+
+cta_stops <- fread(file.path(cta_dir, "stops.txt"))
+metra_stops <- fread(file.path(metra_dir, "stops.txt"))
+
+# Identify CTA rail stations
+cta_rail_stops <- cta_stops %>%
+  filter(
+    (!is.na(parent_station) & parent_station != "") |
+    (!is.na(location_type) & location_type == 1)
+  )
+
+if (nrow(cta_rail_stops) == 0) {
+  cta_routes <- fread(file.path(cta_dir, "routes.txt"))
+  rail_routes <- cta_routes %>% filter(route_type == 1)
+  cta_trips <- fread(file.path(cta_dir, "trips.txt"))
+  rail_trips <- cta_trips %>% filter(route_id %in% rail_routes$route_id)
+  cta_stop_times <- fread(file.path(cta_dir, "stop_times.txt"))
+  rail_stop_ids <- unique(
+    cta_stop_times %>% 
+    filter(trip_id %in% rail_trips$trip_id) %>%
+    pull(stop_id)
+  )
+  cta_rail_stops <- cta_stops %>% filter(stop_id %in% rail_stop_ids)
+}
+
+# Filter Metra stops to Illinois
+metra_il_stops <- metra_stops %>% filter(stop_lat <= 42.5)
+
+# Convert to spatial features
+cta_rail_sf <- st_as_sf(
+  cta_rail_stops, 
+  coords = c("stop_lon", "stop_lat"), 
+  crs = WGS84) %>%
+  mutate(agency = "CTA")
+
+metra_sf <- st_as_sf(
+  metra_il_stops, 
+  coords = c("stop_lon", "stop_lat"), 
+  crs = WGS84) %>%
+  mutate(agency = "Metra")
+
+# Create station buffers
+cta_rail_buffers <- st_transform(cta_rail_sf, IL_STATE_PLANE) %>%
+  st_buffer(2640) %>%
+  st_union() %>%
+  st_make_valid()
+
+metra_buffers <- st_transform(metra_sf, IL_STATE_PLANE) %>%
+  st_buffer(2640) %>%
+  st_union() %>%
+  st_make_valid()
+
+# Load TSL route boundaries
+tsl_route_boundaries <- query_arcgis(14) %>% 
+  st_make_valid() %>%
+  st_transform(IL_STATE_PLANE)
+
+# Combine CTA-served areas
+cta_served_area <- st_union(cta_rail_buffers, st_union(tsl_route_boundaries))
+
+# Calculate Metra-only areas
+metra_only_area <- st_difference(metra_buffers, cta_served_area) %>%
+  st_make_valid()
+
+# Apply downtown carve-out
+downtown_union <- st_transform(downtown_districts, IL_STATE_PLANE) %>% 
+  st_union() %>%
+  st_make_valid()
+
+cta_no_parking_zone <- st_difference(cta_served_area, downtown_union) %>%
+  st_make_valid()
+
+# Load and apply city boundaries
+city_boundary <- st_read(
+  "https://data.cityofchicago.org/resource/qqq8-j68g.geojson", 
+  quiet = TRUE) %>%
+  st_make_valid() %>%
+  st_transform(IL_STATE_PLANE)
+
+cta_no_parking_zone <- st_intersection(cta_no_parking_zone, city_boundary) %>%
+  st_make_valid()
+metra_only_area <- st_intersection(metra_only_area, city_boundary) %>%
+  st_make_valid()
+
+# Transform back to WGS84 for mapping
+downtown_wgs <- st_transform(downtown_union, WGS84)
+cta_no_parking_wgs <- st_transform(cta_no_parking_zone, WGS84)
+metra_only_wgs <- st_transform(metra_only_area, WGS84)
+city_boundary_wgs <- st_transform(city_boundary, WGS84)
+```
+
+```{r create_map}
+# Create interactive map
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  
+  # Zone polygons
+  addPolygons(
+    data = cta_no_parking_wgs,
+    fillColor = "#6B46C1", 
+    fillOpacity = 0.35,
+    color = "#6B46C1",
+    weight = 1,
+    group = "No Parking Requirements",
+    popup = "No parking requirements - build freely!"
+  ) %>%
+  
+  addPolygons(
+    data = metra_only_wgs, 
+    fillColor = "#F97316",
+    fillOpacity = 0.45,
+    color = "#EA580C",
+    weight = 2,
+    group = "Admin Adjustment Required (Metra-only)",
+    popup = "Administrative Adjustment required for parking reduction"
+  ) %>%
+  
+  addPolygons(
+    data = downtown_wgs, 
+    fillColor = "#000000",
+    fillOpacity = 0.15,
+    color = "#000000",
+    weight = 0.7,
+    group = "Admin Adjustment Required ('D' districts)",
+    popup = "Downtown district - parking requirements remain"
+  ) %>%
+  
+  # Transit stations
+  addCircleMarkers(
+    data = cta_rail_sf, 
+    radius = 3,
+    color = "#0078D4",
+    fillOpacity = 0.9,
+    group = "CTA Rail Stations",
+    popup = ~paste0("<b>", stop_name, "</b><br>CTA Rail")
+  ) %>%
+  
+  addCircleMarkers(
+    data = metra_sf, 
+    radius = 3,
+    color = "#E31837",
+    fillOpacity = 0.9,
+    group = "Metra Stations",
+    popup = ~paste0("<b>", stop_name, "</b><br>Metra")
+  ) %>%
+  
+  # City boundary
+  addPolylines(
+    data = city_boundary_wgs,
+    color = "#666666",
+    weight = 1,
+    opacity = 0.7,
+    fill = FALSE
+  ) %>%
+  
+  # Layer controls
+  addLayersControl(
+    overlayGroups = c("No Parking Requirements",
+                      "Admin Adjustment Required (Metra-only)",
+                      "Admin Adjustment Required ('D' districts)",
+                      "CTA Rail Stations",
+                      "Metra Stations"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  # Legend
+  addLegend(
+    position = "bottomright",
+    colors = c("#6B46C1", "#F97316", "#000000"),
+    labels = c("No Parking Requirements",
+               "Admin Adjustment Required (Metra)",
+               "Admin Adjustment Required ('D' districts)"),
+    title = "Parking Elimination Zones",
+    opacity = 0.7
+  ) %>%
+  
+  # Hide optional layers initially
+  hideGroup("Admin Adjustment Required (Metra-only)") %>%
+  hideGroup("Admin Adjustment Required ('D' districts)") %>%
+  hideGroup("CTA Rail Stations") %>%
+  hideGroup("Metra Stations") %>%
+  
+  # Add fullscreen control
+  addFullscreenControl() %>%
+  
+  # Set initial view
+  setView(lng = -87.6200013, lat = 41.8759565, zoom = 10)
+```
